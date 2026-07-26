@@ -45,12 +45,6 @@
             <button class="login-eye-btn" onclick="togglePasswordVisibility()" title="إظهار/إخفاء كلمة المرور" aria-label="إظهار/إخفاء كلمة المرور">👁</button>
           </div>
         </div>
-        <div class="login-field">
-          <label for="login-api-base">عنوان الخادم (API)</label>
-          <div class="login-input-wrap">
-            <input type="text" id="login-api-base" placeholder="http://localhost:8000" autocomplete="off" />
-          </div>
-        </div>
         <div id="login-error"></div>
         <button id="login-btn" onclick="handleLogin()">دخول</button>
         <div class="login-footer">نظام إدارة العيادة السنية — متصل بخادم البيانات</div>
@@ -759,12 +753,8 @@
                   </button>
                 </div>
               </div>
-              <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
-                <label for="settings-api-base" style="font-size:12px;font-weight:600;color:var(--text-muted)">عنوان الخادم (API)</label>
-                <input type="text" id="settings-api-base" placeholder="http://localhost:8000"
-                  onchange="Backend.setApiBase(this.value.trim())"
-                  style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;direction:ltr;text-align:left" />
-                <div id="sync-status" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+              <div style="margin-top:16px">
+                <div id="sync-status" style="font-size:12px;color:var(--text-muted)"></div>
               </div>
             </div>
 

@@ -61,11 +61,6 @@ async function handleLogin() {
     return;
   }
 
-  const baseInput = document.getElementById('login-api-base');
-  if (baseInput && baseInput.value.trim()) {
-    Backend.setApiBase(baseInput.value.trim());
-  }
-
   btn.disabled = true;
   btn.textContent = 'جاري التحقق...';
 
@@ -134,9 +129,6 @@ function initAuth() {
   const subEl = document.getElementById('login-subtitle');
   if (titleEl) titleEl.textContent = '🔐 تسجيل الدخول';
   if (subEl) subEl.textContent = 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى النظام';
-
-  const baseInput = document.getElementById('login-api-base');
-  if (baseInput) baseInput.value = Backend.getApiBase();
 
   if (Backend.getApi().isAuthenticated() && isSessionValid()) {
     hideLoginScreen();

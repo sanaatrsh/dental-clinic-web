@@ -88,6 +88,9 @@
     return this.request('POST', '/login', {
       body: { email: email, password: password, device_name: deviceName || 'web' },
     }).then(function (data) {
+      if (!data || !data.token) {
+        throw new ApiError(0, 'استجابة غير متوقعة من الخادم — تأكد من أن عنوان الـ API صحيح وأن الخادم يعمل');
+      }
       self.setToken(data.token);
       return data;
     });

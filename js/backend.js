@@ -8,27 +8,25 @@
 (function (global) {
   'use strict';
 
-  var API_BASE_KEY = 'dental_api_base';
+  // ===========================================================================
+  // API server URL — change this one line if the backend moves.
+  // Points to the deployed Laravel API.
+  // ===========================================================================
+  var API_BASE = 'https://lightsalmon-stingray-139704.hostingersite.com';
 
-  function defaultBase() {
-    var origin = global.location && global.location.origin;
-    if (!origin || origin === 'null' || origin.indexOf('http') !== 0) {
-      return 'http://localhost:8000';
-    }
-    return origin;
-  }
+  var API_BASE_KEY = 'dental_api_base';
+  // Clear any stale server URL saved by older builds so it can't override API_BASE.
+  try { localStorage.removeItem(API_BASE_KEY); } catch (e) { /* ignore */ }
 
   function getApiBase() {
-    return localStorage.getItem(API_BASE_KEY) || defaultBase();
+    return API_BASE;
   }
 
   function setApiBase(url) {
     if (url) {
-      localStorage.setItem(API_BASE_KEY, url.replace(/\/$/, ''));
-    } else {
-      localStorage.removeItem(API_BASE_KEY);
+      API_BASE = url.replace(/\/$/, '');
+      api = new global.DentalApi(API_BASE);
     }
-    api = new global.DentalApi(getApiBase());
   }
 
   var api = new global.DentalApi(getApiBase());
@@ -125,11 +123,6 @@
         return false;
       });
   }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var el = document.getElementById('settings-api-base');
-    if (el) el.value = getApiBase();
-  });
 
   global.Backend = {
     api: api,
