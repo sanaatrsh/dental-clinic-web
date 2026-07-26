@@ -2719,6 +2719,7 @@
       function openClinicNameModal() {
         const current = localStorage.getItem("dental_clinic_name") || "";
         document.getElementById("clinic-name-input").value = current;
+        if (typeof loadDoctorEmail === "function") loadDoctorEmail();
         document.getElementById("modal-clinic-name").classList.add("open");
         setTimeout(
           () => document.getElementById("clinic-name-input").focus(),

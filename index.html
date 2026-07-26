@@ -133,6 +133,12 @@
         </div>
         <div
           class="nav-item"
+          onclick="showPage('calendar'); closeSidebar(); renderCalendar(); renderReminders();"
+        >
+          <span class="icon">📅</span> المواعيد والتقويم
+        </div>
+        <div
+          class="nav-item"
           onclick="showPage('treatment-plans'); closeSidebar(); renderTreatmentPlansList();"
         >
           <span class="icon">📋</span> الخطط العلاجية
@@ -955,6 +961,30 @@
           </div>
         </div>
 
+        <!-- ========== CALENDAR / APPOINTMENTS PAGE ========== -->
+        <div class="page" id="page-calendar">
+          <div id="reminders-bar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+          <div class="card">
+            <div class="card-header" style="flex-wrap:wrap;gap:12px">
+              <div>
+                <div class="card-title">📅 المواعيد والتقويم</div>
+                <div class="card-subtitle" id="cal-title">—</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <button class="btn btn-sm btn-primary" id="btn-view-month" onclick="setCalView('month')">شهر</button>
+                <button class="btn btn-sm btn-outline" id="btn-view-week" onclick="setCalView('week')">أسبوع</button>
+                <button class="btn btn-sm btn-outline" id="btn-view-day" onclick="setCalView('day')">يوم</button>
+                <span style="width:1px;height:24px;background:var(--border);margin:0 4px"></span>
+                <button class="btn btn-sm btn-outline" onclick="calPrev()" title="السابق">‹</button>
+                <button class="btn btn-sm btn-outline" onclick="calToday()">اليوم</button>
+                <button class="btn btn-sm btn-outline" onclick="calNext()" title="التالي">›</button>
+                <button class="btn btn-sm btn-success" onclick="openAddApptModal()">➕ موعد جديد</button>
+              </div>
+            </div>
+            <div id="calendar-container" style="margin-top:8px"></div>
+          </div>
+        </div>
+
         <!-- ========== TREATMENT PLANS PAGE ========== -->
         <div class="page" id="page-treatment-plans">
           <div class="card">
@@ -1710,6 +1740,17 @@
               style="font-size: 15px; font-weight: 600"
             />
           </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني للطبيب
+              <span id="doctor-email-saved" style="display:none;color:#28a745;font-size:12px">✅ تم الحفظ</span>
+            </label>
+            <input
+              type="email"
+              id="doctor-email-input"
+              placeholder="clinic@example.com"
+              style="font-size: 14px; direction: ltr; text-align: left"
+            />
+          </div>
         </div>
         <div class="modal-footer">
           <button
@@ -1722,8 +1763,8 @@
           >
             إلغاء
           </button>
-          <button class="btn btn-accent" onclick="saveClinicName()">
-            💾 حفظ الاسم
+          <button class="btn btn-accent" onclick="saveDoctorEmail(); saveClinicName()">
+            💾 حفظ
           </button>
         </div>
       </div>
