@@ -1,0 +1,1865 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#0a4d6e" />
+    <title>الكنج - نظام إدارة المرضى</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Cairo:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="css/dental-chart.css" />
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <!-- ========== AUTH OVERLAY — شاشة تسجيل الدخول ========== -->
+    <div id="auth-overlay">
+      <div id="login-card">
+        <div class="login-logo">
+          <div class="login-logo-icon">🦷</div>
+          <div id="login-title">مرحباً بك</div>
+          <p id="login-subtitle">أدخل كلمة المرور للوصول إلى النظام</p>
+        </div>
+        <div class="login-field">
+          <label for="login-email">البريد الإلكتروني</label>
+          <div class="login-input-wrap">
+            <input type="email" id="login-email" placeholder="admin@dental.clinic" autocomplete="username" />
+          </div>
+        </div>
+        <div class="login-field">
+          <label for="login-password">كلمة المرور</label>
+          <div class="login-input-wrap">
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+            <button class="login-eye-btn" onclick="togglePasswordVisibility()" title="إظهار/إخفاء كلمة المرور" aria-label="إظهار/إخفاء كلمة المرور">👁</button>
+          </div>
+        </div>
+        <div class="login-field">
+          <label for="login-api-base">عنوان الخادم (API)</label>
+          <div class="login-input-wrap">
+            <input type="text" id="login-api-base" placeholder="http://localhost:8000" autocomplete="off" />
+          </div>
+        </div>
+        <div id="login-error"></div>
+        <button id="login-btn" onclick="handleLogin()">دخول</button>
+        <div class="login-footer">نظام إدارة العيادة السنية — متصل بخادم البيانات</div>
+      </div>
+    </div>
+
+    <!-- ========== APP WRAPPER ========== -->
+    <div id="app-wrapper">
+
+    <!-- MOBILE OVERLAY -->
+    <div
+      class="sidebar-overlay"
+      id="sidebar-overlay"
+      onclick="closeSidebar()"
+    ></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo" id="sidebar-logo-area">
+        <div class="logo-icon">🦷</div>
+        <div class="logo-text" id="logo-display">
+          <h2 id="clinic-name-display">عيادتي</h2>
+          <p>نظام إدارة المرضى</p>
+        </div>
+        <button
+          id="edit-clinic-name-btn"
+          onclick="openClinicNameModal()"
+          title="تعديل اسم العيادة"
+          style="
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            width: 100%;
+            transition: all 0.2s;
+            text-align: right;
+          "
+        >
+          ✏️ تعديل اسم العيادة
+        </button>
+      </div>
+      <nav class="sidebar-nav" role="navigation" aria-label="القائمة الرئيسية">
+        <div class="nav-section-title">القائمة الرئيسية</div>
+        <div
+          class="nav-item active"
+          onclick="
+            showPage('dashboard');
+            closeSidebar();
+          "
+        >
+          <span class="icon">🏠</span> الرئيسية
+        </div>
+        <div
+          class="nav-item"
+          onclick="
+            showPage('patients');
+            closeSidebar();
+          "
+        >
+          <span class="icon">👥</span> قائمة المرضى
+        </div>
+        <div
+          class="nav-item"
+          onclick="
+            showPage('add-patient');
+            closeSidebar();
+          "
+        >
+          <span class="icon">➕</span> إضافة مريض جديد
+        </div>
+        <div class="nav-section-title">الإعدادات</div>
+        <div class="nav-item" onclick="openChangePasswordModal(); closeSidebar();">
+          <span class="icon">🔐</span> تغيير كلمة المرور
+        </div>
+        <div class="nav-section-title">الأدوات</div>
+        <div
+          class="nav-item"
+          onclick="showPage('analytics'); closeSidebar(); renderAnalytics();"
+        >
+          <span class="icon">📊</span> التحليلات المتقدمة
+        </div>
+        <div
+          class="nav-item"
+          onclick="showPage('treatment-plans'); closeSidebar(); renderTreatmentPlansList();"
+        >
+          <span class="icon">📋</span> الخطط العلاجية
+        </div>
+        <div
+          class="nav-item"
+          onclick="
+            showPage('import');
+            closeSidebar();
+          "
+        >
+          <span class="icon">📂</span> تحميل ملف مريض
+        </div>
+        <div
+          class="nav-item"
+          onclick="
+            showPage('backup');
+            closeSidebar();
+          "
+        >
+          <span class="icon">🛡️</span> نسخة احتياطية
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="creator">
+          Created by:
+          <a
+            href="https://www.linkedin.com/in/hiba-alkanj-3997973b1?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+            target="_blank"
+            rel="noopener noreferrer"
+            >eng.Hiba Alkanj</a
+          >
+        </div>
+
+        <div class="sidebar-social" aria-label="روابط التواصل">
+          <a
+            class="social-link"
+            href="https://wa.me/963933648691"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="واتساب"
+            title="WhatsApp"
+            >
+            <i class="fab fa-whatsapp"></i>
+</a>
+          <a
+            class="social-link"
+            href="https://www.linkedin.com/in/hiba-alkanj-3997973b1?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="LinkedIn"
+            title="LinkedIn"
+            > 
+            <i class="fab fa-linkedin"></i></a
+          >
+          <a
+            class="social-link"
+            href="https://www.facebook.com/share/1EKSEj7sdZ/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            title="Facebook"
+            ><i class="fab fa-facebook"></i></i
+          ></a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main" role="main" aria-label="محتوى التطبيق">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+          <div>
+            <div class="topbar-title" id="page-title">لوحة التحكم</div>
+            <div class="topbar-subtitle" id="page-subtitle">
+              مرحباً بك في نظام إدارة العيادة
+            </div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <!-- Dark Mode Toggle -->
+          <span class="theme-icon" id="theme-icon">☀️</span>
+          <button
+            class="theme-toggle"
+            id="theme-toggle"
+            onclick="toggleTheme()"
+            title="تبديل الوضع الليلي"
+            aria-label="تبديل الوضع الليلي"
+          ></button>
+          <button
+            class="btn btn-accent btn-sm"
+            onclick="showPage('add-patient')"
+          >
+            ➕ <span class="hide-xs">مريض جديد</span>
+          </button>
+          <button class="logout-btn" onclick="logout()" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+            🔒 <span class="hide-xs">خروج</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- ========== DASHBOARD ========== -->
+        <div class="page active" id="page-dashboard">
+          <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-value" id="stat-total">0</div>
+              <div class="stat-label">إجمالي المرضى</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-icon">✅</div>
+              <div class="stat-value" id="stat-treatments">0</div>
+              <div class="stat-label">معالجات مكتملة</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-icon">💰</div>
+              <div class="stat-value" id="stat-paid">0</div>
+              <div class="stat-label">إجمالي المدفوع</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-value" id="stat-remaining">0</div>
+              <div class="stat-label">إجمالي المتبقي</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-icon">🔬</div>
+              <div class="stat-value" id="stat-lab-total">0</div>
+              <div class="stat-label">تكلفة المخبر الإجمالية</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-icon">🔬</div>
+              <div class="stat-value" id="stat-lab-remaining">0</div>
+              <div class="stat-label">متبقي المخبر</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">آخر المرضى المضافين</div>
+                <div class="card-subtitle">أحدث السجلات في النظام</div>
+              </div>
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="showPage('patients')"
+              >
+                عرض الكل
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>المريض</th>
+                    <th>الجنس</th>
+                    <th>العمر</th>
+                    <th>رقم الهاتف</th>
+                    <th>المعالجات</th>
+                    <th>الحالة المالية</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-table"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="dashboard-empty">
+              <div class="icon">🦷</div>
+              <h3>لا يوجد مرضى بعد</h3>
+              <p>ابدأ بإضافة أول مريض في النظام</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== PATIENTS LIST ========== -->
+        <div class="page" id="page-patients">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">قائمة جميع المرضى</div>
+                <div class="card-subtitle" id="patients-count">0 مريض</div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  align-items: center;
+                  flex-wrap: wrap;
+                "
+              >
+                <div class="search-wrap">
+                  <input
+                    type="text"
+                    placeholder="بحث بالاسم..."
+                    id="search-input" aria-label="البحث عن مريض"
+                    oninput="applyFilters()"
+                    style="width: 180px"
+                  />
+                  <span class="search-icon">🔍</span>
+                </div>
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="toggleFilterPanel()"
+                  id="filter-btn"
+                >
+                  🔽 فلترة
+                </button>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="showPage('add-patient')"
+                >
+                  ➕ إضافة
+                </button>
+              </div>
+            </div>
+
+            <!-- FILTER PANEL -->
+            <div class="filter-panel" id="filter-panel">
+              <div class="filter-group">
+                <label for="f-gender">الجنس</label>
+                <select id="f-gender" onchange="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="male">ذكر 👨</option>
+                  <option value="female">أنثى 👩</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="f-age-from">العمر من</label>
+                <input
+                  type="number"
+                  id="f-age-min"
+                  placeholder="0"
+                  min="0"
+                  max="120"
+                  oninput="applyFilters()"
+                />
+              </div>
+              <div class="filter-group">
+                <label for="f-age-to">العمر إلى</label>
+                <input
+                  type="number"
+                  id="f-age-max"
+                  placeholder="120"
+                  min="0"
+                  max="120"
+                  oninput="applyFilters()"
+                />
+              </div>
+              <div class="filter-group">
+                <label for="f-address">المنطقة / العنوان</label>
+                <input
+                  type="text"
+                  id="f-address"
+                  placeholder="مثال: دمشق"
+                  oninput="applyFilters()"
+                />
+              </div>
+              <div class="filter-group">
+                <label for="f-health">الحالة الصحية</label>
+                <select id="f-health" onchange="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="healthy">سليم</option>
+                  <option value="sick">مريض</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="f-disease">نوع المرض</label>
+                <select id="f-disease" onchange="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="diabetes">السكري</option>
+                  <option value="heart">أمراض القلب</option>
+                  <option value="pressure">ضغط الدم</option>
+                  <option value="surgery">عمليات جراحية سابقة</option>
+                  <option value="allergy">الحساسية</option>
+                  <option value="bleeding">اضطرابات التخثر/النزيف</option>
+                  <option value="osteoporosis">هشاشة العظام</option>
+                  <option value="thyroid">الغدة الدرقية</option>
+                  <option value="kidney">أمراض الكلى</option>
+                  <option value="liver">أمراض الكبد</option>
+                  <option value="asthma">الربو</option>
+                  <option value="pregnancy">حمل</option>
+                  <option value="cancer">السرطان / العلاج الكيميائي</option>
+                  <option value="other">أخرى</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="f-payment">الحالة المالية</label>
+                <select id="f-payment" onchange="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="paid">مسدد بالكامل ✅</option>
+                  <option value="remaining">متبقي عليه ⏳</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="f-surgery">⚕️ عمليات جراحية</label>
+                <select id="f-surgery" onchange="applyFilters()">
+                  <option value="">الكل</option>
+                  <option value="yes">نعم — لديه عمليات سابقة</option>
+                  <option value="no">لا — لا توجد عمليات</option>
+                </select>
+              </div>
+              <div class="filter-actions">
+                <button class="btn btn-danger btn-sm" onclick="resetFilters()">
+                  🔄 مسح
+                </button>
+              </div>
+            </div>
+
+            <!-- ACTIVE FILTER BADGES -->
+            <div class="filter-badges" id="filter-badges"></div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>المريض</th>
+                    <th>الجنس</th>
+                    <th>العمر</th>
+                    <th>الهاتف</th>
+                    <th>العنوان</th>
+                    <th>المعالجات</th>
+                    <th>المدفوع</th>
+                    <th>المتبقي</th>
+                    <th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="patients-table"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="patients-empty">
+              <div class="icon">👥</div>
+              <h3>لا يوجد مرضى</h3>
+              <p>لم يتم العثور على نتائج مطابقة للبحث أو الفلتر</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== ADD PATIENT ========== -->
+        <div class="page" id="page-add-patient">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">✏️ إضافة مريض جديد</div>
+                <div class="card-subtitle">أدخل المعلومات الكاملة للمريض</div>
+              </div>
+            </div>
+
+            <div class="section-divider">المعلومات الشخصية</div>
+            <div class="form-grid" style="margin-bottom: 14px">
+              <div class="form-group">
+                <label for="p-firstname">الاسم الأول <span class="required">*</span></label>
+                <input type="text" id="p-firstname" placeholder="مثال: هبة " />
+              </div>
+              <div class="form-group">
+                <label for="p-fathername">اسم الأب <span class="required">*</span></label>
+                <input type="text" id="p-fathername" placeholder="مثال: أحمد" />
+              </div>
+              <div class="form-group">
+                <label for="p-lastname">النسبة (اسم العائلة)</label>
+                <input type="text" id="p-lastname" placeholder="مثال: الكنج" />
+              </div>
+              <div class="form-group">
+                <label for="p-gender">الجنس <span class="required">*</span></label>
+                <select id="p-gender">
+                  <option value="">-- اختر الجنس --</option>
+                  <option value="male">ذكر 👨</option>
+                  <option value="female">أنثى 👩</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>العمر</label>
+                <input
+                  type="number"
+                  id="p-age"
+                  placeholder="مثال: 35"
+                  min="1"
+                  max="120"
+                />
+              </div>
+              <div class="form-group">
+                <label for="p-phone">رقم الهاتف <span class="required">*</span></label>
+                <input type="tel" id="p-phone" placeholder="مثال: 0912345678" />
+              </div>
+              <div class="form-group">
+                <label>عنوان السكن</label>
+                <input
+                  type="text"
+                  id="p-address"
+                  placeholder="مثال: دمشق - المزة"
+                />
+              </div>
+              <div class="form-group full">
+                <label for="p-notes">ملاحظات إضافية</label>
+                <textarea id="p-notes"
+                  id="p-notes"
+                  placeholder="أي ملاحظات تخص المريض..."
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="section-divider">🏥 الحالة الصحية</div>
+            <div class="form-grid" style="margin-bottom:14px">
+              <div class="form-group">
+                <label for="p-health-status">هل المريض يعاني من مرض مزمن؟</label>
+                <select id="p-health-status" onchange="toggleHealthFields('add')">
+                  <option value="healthy">لا — سليم</option>
+                  <option value="sick">نعم — مريض</option>
+                </select>
+              </div>
+              <div class="form-group" id="p-disease-group" style="display:none">
+                <label for="p-disease">نوع المرض</label>
+                <select id="p-disease">
+                  <option value="">-- اختر --</option>
+                  <option value="diabetes">السكري</option>
+                  <option value="heart">أمراض القلب</option>
+                  <option value="pressure">ضغط الدم</option>
+                  <option value="surgery">عمليات جراحية سابقة</option>
+                  <option value="allergy">الحساسية</option>
+                  <option value="bleeding">اضطرابات التخثر / النزيف</option>
+                  <option value="osteoporosis">هشاشة العظام</option>
+                  <option value="thyroid">الغدة الدرقية</option>
+                  <option value="kidney">أمراض الكلى</option>
+                  <option value="liver">أمراض الكبد</option>
+                  <option value="asthma">الربو</option>
+                  <option value="pregnancy">حمل</option>
+                  <option value="cancer">السرطان / العلاج الكيميائي</option>
+                  <option value="other">أخرى</option>
+                </select>
+              </div>
+              <div class="form-group" id="p-surgery-group" style="display:none">
+                <label for="p-surgery">هل أُجريت عمليات جراحية سابقة؟</label>
+                <select id="p-surgery">
+                  <option value="no">لا</option>
+                  <option value="yes">نعم</option>
+                </select>
+              </div>
+              <div class="form-group full" id="p-disease-notes-group" style="display:none">
+                <label for="p-disease-notes">تفاصيل الحالة الصحية</label>
+                <textarea id="p-disease-notes" placeholder="اكتب تفاصيل المرض أو الأدوية التي يتناولها المريض..."></textarea>
+              </div>
+            </div>
+
+            <div class="section-divider">المعالجات السنية</div>
+            <div id="treatments-list-add"></div>
+            <button class="btn btn-outline btn-sm" onclick="addTreatmentRow()">
+              ➕ إضافة معالجة
+            </button>
+
+            <div class="section-divider">الدفعات المالية</div>
+            <div class="form-grid-3" style="margin-bottom: 14px">
+              <div class="form-group">
+                <label>إجمالي التكلفة</label>
+                <div class="input-with-currency">
+                  <input
+                    type="number"
+                    id="p-total"
+                    placeholder="0"
+                    min="0"
+                    oninput="calcRemaining()"
+                  />
+                  <div class="currency-select-wrap">
+                    <select id="p-currency" onchange="calcRemaining()">
+                      <option value="SYP">ل.س</option>
+                      <option value="USD">USD $</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>المبلغ المدفوع</label>
+                <input
+                  type="number"
+                  id="p-paid"
+                  placeholder="0"
+                  min="0"
+                  oninput="calcRemaining()"
+                />
+              </div>
+              <div class="form-group">
+                <label>المبلغ المتبقي</label>
+                <input
+                  type="number"
+                  id="p-remaining"
+                  placeholder="0"
+                  readonly
+                  style="
+                    background: var(--surface2);
+                    color: var(--danger);
+                    font-weight: 700;
+                  "
+                />
+              </div>
+            </div>
+
+            <div class="section-divider">الصور الشعاعية</div>
+            <div
+              class="upload-zone"
+              id="upload-zone-add"
+              onclick="document.getElementById('xray-input-add').click()"
+              ondragover="
+                event.preventDefault();
+                this.classList.add('dragover');
+              "
+              ondragleave="this.classList.remove('dragover')"
+              ondrop="handleDrop(event, 'add')"
+            >
+              <div class="upload-icon">🩻</div>
+              <div class="upload-text">
+                اسحب وأفلت الصور الشعاعية هنا<br />أو
+                <strong>انقر للاختيار (PNG, JPG, JPEG )</strong>
+              </div>
+              <!-- <div
+                style="
+                  font-size: 11px;
+                  color: var(--text-muted);
+                  margin-top: 6px;
+                "
+              >
+                PNG, JPG, JPEG — بدون حد للعدد
+              </div> -->
+            </div>
+            <input
+              type="file"
+              id="xray-input-add"
+              accept="image/*"
+              multiple
+              style="display: none"
+              onchange="handleXrayUpload(this, 'add')"
+            />
+            <div class="xray-grid" id="xray-preview-add"></div>
+
+            <div
+              style="
+                margin-top: 22px;
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+              "
+            >
+              <button class="btn btn-outline" onclick="resetAddForm()">
+                🔄 مسح الحقول
+              </button>
+              <button class="btn btn-accent" onclick="savePatient()">
+                💾 حفظ المريض
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== IMPORT ========== -->
+        <div class="page" id="page-import">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📂 تحميل ملف المريض</div>
+                <div class="card-subtitle">
+                  ارفع الملف الخاص بالمريض لتعديل بياناته
+                </div>
+              </div>
+            </div>
+            <div
+              class="import-zone"
+              onclick="document.getElementById('import-input').click()"
+            >
+              <div class="icon">📁</div>
+              <h3>اسحب ملف المريض هنا</h3>
+              <p>أو انقر للاختيار — صيغة <strong>.json</strong> أو <strong>.xlsx</strong></p>
+            </div>
+            <input
+              type="file"
+              id="import-input"
+              accept=".json,.xlsx,.xls"
+              style="display: none"
+              onchange="importPatient(this)"
+            />
+            <div id="import-result" style="margin-top: 16px"></div>
+          </div>
+        </div>
+
+        <!-- ========== BACKUP ========== -->
+        <div class="page" id="page-backup">
+          <div style="display: grid; gap: 20px">
+            <!-- CLOUD SYNC (API) -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">☁️ المزامنة مع الخادم</div>
+                  <div class="card-subtitle">
+                    رفع البيانات المحلية إلى الخادم أو تحميلها منه
+                  </div>
+                </div>
+              </div>
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px"
+                class="backup-grid"
+              >
+                <div class="backup-option-card" onclick="Backend.saveToServer()">
+                  <div class="backup-option-icon">⬆️</div>
+                  <div class="backup-option-title">رفع إلى الخادم</div>
+                  <div class="backup-option-desc">
+                    يرفع جميع المرضى والمواعيد والخطط والإعدادات إلى قاعدة بيانات الخادم (دمج/تحديث).
+                  </div>
+                  <button class="btn btn-primary" style="margin-top:14px;width:100%;justify-content:center">
+                    ⬆️ رفع الآن
+                  </button>
+                </div>
+                <div class="backup-option-card" onclick="Backend.loadFromServer()">
+                  <div class="backup-option-icon">⬇️</div>
+                  <div class="backup-option-title">تحميل من الخادم</div>
+                  <div class="backup-option-desc">
+                    يستبدل البيانات المحلية بأحدث نسخة من الخادم ثم يعيد تحميل الصفحة.
+                  </div>
+                  <button class="btn btn-success" style="margin-top:14px;width:100%;justify-content:center">
+                    ⬇️ تحميل الآن
+                  </button>
+                </div>
+              </div>
+              <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
+                <label for="settings-api-base" style="font-size:12px;font-weight:600;color:var(--text-muted)">عنوان الخادم (API)</label>
+                <input type="text" id="settings-api-base" placeholder="http://localhost:8000"
+                  onchange="Backend.setApiBase(this.value.trim())"
+                  style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;direction:ltr;text-align:left" />
+                <div id="sync-status" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+              </div>
+            </div>
+
+            <!-- EXPORT ALL -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">💾 تصدير نسخة احتياطية شاملة</div>
+                  <div class="card-subtitle">
+                    احفظ بيانات جميع المرضى دفعةً واحدة
+                  </div>
+                </div>
+              </div>
+              <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px"
+                class="backup-grid"
+              >
+                <div class="backup-option-card" onclick="exportAllJSON()">
+                  <div class="backup-option-icon">📦</div>
+                  <div class="backup-option-title">تصدير JSON — نسخة كاملة</div>
+                  <div class="backup-option-desc">
+                    يشمل: المرضى · المواعيد · اسم العيادة · البريد الإلكتروني · كلمة المرور · الإعدادات — نسخة احتياطية 100% كاملة
+                  </div>
+                  <div style="margin-top:10px;padding:8px 10px;background:rgba(40,167,69,0.1);border-radius:8px;font-size:11px;color:#28a745;font-weight:600;text-align:center">
+                    ✅ يشمل المواعيد وكل الإعدادات
+                  </div>
+                  <button
+                    class="btn btn-primary"
+                    style="
+                      margin-top: 14px;
+                      width: 100%;
+                      justify-content: center;
+                    "
+                  >
+                    ⬇️ تنزيل backup.json
+                  </button>
+                </div>
+                <div class="backup-option-card" onclick="exportAllExcel()">
+                  <div class="backup-option-icon">📊</div>
+                  <div class="backup-option-title">تصدير Excel الشامل</div>
+                  <div class="backup-option-desc">
+                    ملف Excel يحتوي على جميع المرضى ومعالجاتهم ودفعاتهم في جداول
+                    منظمة
+                  </div>
+                  <button
+                    class="btn btn-success"
+                    style="
+                      margin-top: 14px;
+                      width: 100%;
+                      justify-content: center;
+                    "
+                  >
+                    ⬇️ تنزيل all-patients.xlsx
+                  </button>
+                </div>
+              </div>
+              <div
+                class="alert alert-info"
+                style="margin-top: 16px; margin-bottom: 0"
+              >
+                💡 <strong>نصيحة:</strong> احفظ نسخة JSON بشكل دوري على مساحة
+                التخزين السحابية (Google Drive، iCloud...) لضمان عدم فقدان
+                البيانات.
+              </div>
+            </div>
+
+            <!-- IMPORT ALL -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📥 استعادة نسخة احتياطية</div>
+                  <div class="card-subtitle">
+                    رفع ملف النسخة الاحتياطية لاستعادة جميع المرضى
+                  </div>
+                </div>
+              </div>
+              <div class="alert alert-warning" style="margin-bottom: 16px">
+                ⚠️ <strong>تحذير:</strong> الاستعادة ستدمج البيانات الجديدة مع
+                الموجودة — المرضى الموجودون سيتم تحديثهم والجدد سيتم إضافتهم.
+              </div>
+              <div style="margin-bottom:14px;padding:10px 14px;background:rgba(111,66,193,0.08);border:1px solid rgba(111,66,193,0.25);border-radius:10px;font-size:13px;color:#6f42c1;direction:rtl">
+                📋 <strong>ملفات النسخة الاحتياطية الكاملة (v3.0+) تستعيد:</strong>
+                بيانات المرضى · المواعيد · اسم العيادة · البريد الإلكتروني · كلمة المرور · الإعدادات
+              </div>
+              <div
+                class="import-zone"
+                onclick="document.getElementById('backup-import-input').click()"
+              >
+                <div class="icon">🔄</div>
+                <h3>اسحب ملف النسخة الاحتياطية هنا</h3>
+                <p>أو انقر للاختيار — صيغة <strong>.json</strong> أو <strong>.xlsx</strong></p>
+              </div>
+              <input
+                type="file"
+                id="backup-import-input"
+                accept=".json,.xlsx,.xls"
+                style="display: none"
+                onchange="importAllPatients(this)"
+              />
+              <div id="backup-import-result" style="margin-top: 16px"></div>
+            </div>
+
+            <!-- STATS -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📋 معلومات التخزين الحالي</div>
+                </div>
+                <button
+                  class="btn btn-danger btn-sm"
+                  onclick="confirmClearAll()"
+                >
+                  🗑️ مسح جميع البيانات
+                </button>
+              </div>
+              <div id="storage-stats"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== PATIENT DETAIL ========== -->
+        <div class="page" id="page-patient-detail">
+          <div id="patient-detail-content"></div>
+        </div>
+
+        <!-- ========== ANALYTICS PAGE ========== -->
+        <div class="page" id="page-analytics">
+          <div style="display:grid;gap:20px">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">📊 التحليلات المتقدمة</div>
+                  <div class="card-subtitle">إحصاءات شاملة لأداء العيادة</div>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <select id="analytics-year" onchange="renderAnalytics()" style="font-size:13px;padding:6px 10px">
+                  </select>
+                </div>
+              </div>
+              <!-- Revenue Summary Cards -->
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px" id="analytics-summary"></div>
+            </div>
+
+            <!-- Monthly Revenue Chart -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📈 الإيرادات الشهرية</div>
+              </div>
+              <div style="position:relative;height:280px">
+                <canvas id="revenue-chart"></canvas>
+              </div>
+            </div>
+
+            <!-- Treatments Chart -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="analytics-two-col">
+              <div class="card">
+                <div class="card-header"><div class="card-title">🦷 أنواع المعالجات</div></div>
+                <div style="position:relative;height:240px"><canvas id="treatments-chart"></canvas></div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="card-title">👥 توزيع المرضى</div></div>
+                <div style="position:relative;height:240px"><canvas id="patients-chart"></canvas></div>
+              </div>
+            </div>
+
+            <!-- Pending Payments Report -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">⏳ تقرير الدفعات المتبقية</div>
+                  <div class="card-subtitle">المرضى الذين لديهم مبالغ غير مسددة</div>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="exportPendingPayments()">📥 تصدير Excel</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>المريض</th>
+                      <th>الهاتف</th>
+                      <th>إجمالي التكلفة</th>
+                      <th>المدفوع</th>
+                      <th>المتبقي</th>
+                      <th>نسبة السداد</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pending-payments-table"></tbody>
+                </table>
+              </div>
+              <div class="empty-state" id="pending-payments-empty" style="display:none">
+                <div class="icon">✅</div>
+                <h3>رائع! جميع الدفعات مسددة</h3>
+                <p>لا توجد دفعات متبقية حالياً</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== TREATMENT PLANS PAGE ========== -->
+        <div class="page" id="page-treatment-plans">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📋 الخطط العلاجية</div>
+                <div class="card-subtitle">إنشاء خطة علاجية شاملة وطباعتها بصيغة PDF</div>
+              </div>
+              <button class="btn btn-accent btn-sm" onclick="openNewTreatmentPlan()">➕ خطة علاجية جديدة</button>
+            </div>
+            <div id="treatment-plans-list"></div>
+          </div>
+        </div>
+
+      </div>
+      <!-- /content -->
+    </main>
+
+
+    <!-- ========== MODAL: EDIT PATIENT ========== -->
+    <div class="modal-overlay" id="modal-edit">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">✏️ تعديل بيانات المريض</div>
+          <button class="close-btn" onclick="closeModal('modal-edit')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="section-divider">المعلومات الشخصية</div>
+          <div class="form-grid" style="margin-bottom: 14px">
+            <div class="form-group">
+              <label for="e-firstname">الاسم الأول</label>
+              <input type="text" id="e-firstname" />
+            </div>
+            <div class="form-group">
+              <label for="e-fathername">اسم الأب</label>
+              <input type="text" id="e-fathername" />
+            </div>
+            <div class="form-group">
+              <label for="e-lastname">النسبة</label>
+              <input type="text" id="e-lastname" />
+            </div>
+            <div class="form-group">
+              <label for="e-gender">الجنس</label>
+              <select id="e-gender">
+                <option value="">-- اختر --</option>
+                <option value="male">ذكر 👨</option>
+                <option value="female">أنثى 👩</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="e-age">العمر</label>
+              <input type="number" id="e-age" />
+            </div>
+            <div class="form-group">
+              <label for="e-phone">رقم الهاتف</label>
+              <input type="tel" id="e-phone" />
+            </div>
+            <div class="form-group">
+              <label>العنوان</label>
+              <input type="text" id="e-address" />
+            </div>
+            <div class="form-group full">
+              <label>ملاحظات</label>
+              <textarea id="e-notes"></textarea>
+            </div>
+            <div class="form-group">
+              <label>الحالة الصحية</label>
+              <select id="e-health-status" onchange="toggleHealthFields('edit')">
+                <option value="healthy">سليم</option>
+                <option value="sick">مريض</option>
+              </select>
+            </div>
+            <div class="form-group" id="e-disease-group" style="display:none">
+              <label>نوع المرض</label>
+              <select id="e-disease">
+                <option value="">-- اختر --</option>
+                <option value="diabetes">السكري</option>
+                <option value="heart">أمراض القلب</option>
+                <option value="pressure">ضغط الدم</option>
+                <option value="surgery">عمليات جراحية سابقة</option>
+                <option value="allergy">الحساسية</option>
+                <option value="bleeding">اضطرابات التخثر / النزيف</option>
+                <option value="osteoporosis">هشاشة العظام</option>
+                <option value="thyroid">الغدة الدرقية</option>
+                <option value="kidney">أمراض الكلى</option>
+                <option value="liver">أمراض الكبد</option>
+                <option value="asthma">الربو</option>
+                <option value="pregnancy">حمل</option>
+                <option value="cancer">السرطان / العلاج الكيميائي</option>
+                <option value="other">أخرى</option>
+              </select>
+            </div>
+            <div class="form-group" id="e-surgery-group" style="display:none">
+              <label>عمليات جراحية سابقة؟</label>
+              <select id="e-surgery">
+                <option value="no">لا</option>
+                <option value="yes">نعم</option>
+              </select>
+            </div>
+            <div class="form-group full" id="e-disease-notes-group" style="display:none">
+              <label>تفاصيل الحالة الصحية</label>
+              <textarea id="e-disease-notes" placeholder="تفاصيل المرض أو الأدوية..."></textarea>
+            </div>
+          </div>
+
+          <div class="section-divider">الدفعات</div>
+          <div class="form-grid-3" style="margin-bottom: 14px">
+            <div class="form-group">
+              <label>إجمالي التكلفة</label>
+              <div class="input-with-currency">
+                <input
+                  type="number"
+                  id="e-total"
+                  oninput="editCalcRemaining()"
+                />
+                <div class="currency-select-wrap">
+                  <select id="e-currency">
+                    <option value="SYP">ل.س</option>
+                    <option value="USD">USD $</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>المدفوع</label>
+              <input type="number" id="e-paid" oninput="editCalcRemaining()" />
+            </div>
+            <div class="form-group">
+              <label>المتبقي</label>
+              <input
+                type="number"
+                id="e-remaining"
+                readonly
+                style="
+                  background: var(--surface2);
+                  color: var(--danger);
+                  font-weight: 700;
+                "
+              />
+            </div>
+          </div>
+
+          <div class="section-divider">المعالجات</div>
+          <div id="edit-treatments-list"></div>
+          <button
+            class="btn btn-outline btn-sm"
+            onclick="addEditTreatmentRow()"
+          >
+            ➕ إضافة معالجة
+          </button>
+
+          <div class="section-divider">صور إضافية</div>
+          <div
+            class="upload-zone"
+            onclick="document.getElementById('xray-input-edit').click()"
+          >
+            <div class="upload-icon">🩻</div>
+            <div class="upload-text"><strong>إضافة صور شعاعية</strong></div>
+          </div>
+          <input
+            type="file"
+            id="xray-input-edit"
+            accept="image/*"
+            multiple
+            style="display: none"
+            onchange="handleXrayUpload(this, 'edit')"
+          />
+          <div
+            class="xray-grid"
+            id="xray-preview-edit"
+            style="margin-top: 10px"
+          ></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-edit')">
+            إلغاء
+          </button>
+          <button class="btn btn-accent" onclick="saveEditPatient()">
+            💾 حفظ التعديلات
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: ADD TREATMENT ========== -->
+    <div class="modal-overlay" id="modal-treatment">
+      <div class="modal" style="max-width: 560px">
+        <div class="modal-header">
+          <div class="modal-title">🦷 إضافة معالجة سنية</div>
+          <button class="close-btn" onclick="closeModal('modal-treatment')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- نوع المعالجة -->
+          <div class="form-group" style="margin-bottom: 14px">
+            <label>نوع المعالجة <span class="required">*</span></label>
+            <input
+              type="text"
+              id="t-name"
+              placeholder="مثال: حشو، خلع، تركيب، تقويم، تبييض..."
+            />
+          </div>
+
+          <!-- التاريخ -->
+          <div class="form-group" style="margin-bottom: 14px">
+            <label>تاريخ المعالجة</label>
+            <input type="date" id="t-date" />
+          </div>
+
+          <!-- السن المعالج - قائمة منسدلة -->
+          <div class="form-group" style="margin-bottom: 14px">
+            <label>السن المعالج <span class="required">*</span></label>
+            <div style="position: relative" id="tooth-combobox-wrap">
+              <div
+                style="
+                  display: flex;
+                  border: 1.5px solid var(--border);
+                  border-radius: var(--radius-sm);
+                  overflow: visible;
+                  background: var(--surface2);
+                  transition: all 0.2s;
+                "
+                id="tooth-input-box"
+              >
+                <button
+                  type="button"
+                  onclick="toggleToothDD()"
+                  style="
+                    padding: 0 12px;
+                    background: var(--accent-soft);
+                    border: none;
+                    border-left: 1.5px solid var(--border);
+                    cursor: pointer;
+                    color: var(--primary);
+                    font-size: 16px;
+                    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+                    display: flex;
+                    align-items: center;
+                    flex-shrink: 0;
+                  "
+                  title="اختر من القائمة"
+                >
+                  ▾
+                </button>
+                <input
+                  type="text"
+                  id="t-tooth"
+                  placeholder="اكتب أو اختر السن من القائمة..."
+                  oninput="filterTeethDD()"
+                  onfocus="openToothDD()"
+                  autocomplete="off"
+                  style="
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    padding: 10px 12px;
+                    font-family: inherit;
+                    font-size: 14px;
+                    color: var(--text);
+                    outline: none;
+                    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+                  "
+                />
+              </div>
+              <!-- Dropdown -->
+              <div
+                id="tooth-dropdown"
+                style="
+                  display: none;
+                  position: absolute;
+                  top: calc(100% + 4px);
+                  left: 0;
+                  right: 0;
+                  background: var(--surface);
+                  border: 1.5px solid var(--border);
+                  border-radius: var(--radius-sm);
+                  box-shadow: var(--shadow-lg);
+                  z-index: 500;
+                  max-height: 300px;
+                  overflow: hidden;
+                  direction: rtl;
+                "
+              >
+                <div
+                  style="
+                    padding: 8px 10px;
+                    border-bottom: 1px solid var(--border);
+                    background: var(--surface2);
+                    position: sticky;
+                    top: 0;
+                  "
+                >
+                  <input
+                    type="text"
+                    id="tooth-search-inp"
+                    placeholder="🔍 ابحث عن سن..."
+                    oninput="filterTeethDD()"
+                    style="
+                      width: 100%;
+                      padding: 7px 10px;
+                      border: 1.5px solid var(--border);
+                      border-radius: var(--radius-sm);
+                      font-size: 13px;
+                      font-family: inherit;
+                      color: var(--text);
+                      background: var(--surface);
+                      outline: none;
+                    "
+                  />
+                </div>
+                <div
+                  id="tooth-list"
+                  style="overflow-y: auto; max-height: 200px; padding: 4px"
+                ></div>
+                <div
+                  style="
+                    padding: 8px 10px;
+                    border-top: 1px solid var(--border);
+                    background: var(--surface2);
+                    display: flex;
+                    gap: 6px;
+                    align-items: center;
+                  "
+                >
+                  <input
+                    type="text"
+                    id="custom-tooth-inp"
+                    placeholder="أضف خياراً مخصصاً..."
+                    style="
+                      flex: 1;
+                      padding: 7px 10px;
+                      border: 1.5px solid var(--border);
+                      border-radius: var(--radius-sm);
+                      font-size: 13px;
+                      font-family: inherit;
+                      color: var(--text);
+                      background: var(--surface);
+                      outline: none;
+                    "
+                  />
+                  <button
+                    type="button"
+                    onclick="addCustomToothOption()"
+                    style="
+                      padding: 7px 14px;
+                      background: var(--accent);
+                      color: #fff;
+                      border: none;
+                      border-radius: var(--radius-sm);
+                      cursor: pointer;
+                      font-size: 12px;
+                      font-weight: 700;
+                      white-space: nowrap;
+                      font-family: inherit;
+                    "
+                  >
+                    ➕ إضافة
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- التكلفة والمدفوع والمتبقي -->
+          <div
+            style="
+              background: var(--surface2);
+              border: 1px solid var(--border);
+              border-radius: var(--radius-sm);
+              padding: 14px;
+              margin-bottom: 10px;
+            "
+          >
+            <div
+              style="
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--primary);
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border);
+              "
+            >
+              💰 التكاليف والمدفوعات
+            </div>
+            <div class="form-grid-3" style="margin-bottom: 10px">
+              <div class="form-group">
+                <label>التكلفة الإجمالية <span class="required">*</span></label>
+                <div class="input-with-currency">
+                  <input
+                    type="number"
+                    id="t-cost"
+                    placeholder="0"
+                    min="0"
+                    oninput="calcTreatmentRemaining()"
+                  />
+                  <div class="currency-select-wrap">
+                    <select id="t-currency" onchange="calcTreatmentRemaining()">
+                      <option value="SYP">ل.س</option>
+                      <option value="USD">USD $</option>
+                      <option value="EUR">EUR €</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>المبلغ المسدَّد</label>
+                <input
+                  type="number"
+                  id="t-paid"
+                  placeholder="0"
+                  min="0"
+                  oninput="calcTreatmentRemaining()"
+                />
+              </div>
+              <div class="form-group">
+                <label>المبلغ المتبقي</label>
+                <input
+                  type="number"
+                  id="t-remaining"
+                  placeholder="0"
+                  readonly
+                  style="
+                    background: var(--surface2);
+                    color: var(--danger);
+                    font-weight: 700;
+                  "
+                />
+              </div>
+            </div>
+            <!-- مؤشر حالة الدفع -->
+            <div
+              id="t-pay-indicator"
+              style="
+                display: none;
+                padding: 8px 12px;
+                border-radius: var(--radius-sm);
+                font-size: 12px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              "
+            ></div>
+          </div>
+
+          <!-- ملاحظات -->
+          <div class="form-group">
+            <label>ملاحظات المعالجة</label>
+            <textarea
+              id="t-notes"
+              placeholder="أي ملاحظات خاصة بهذه المعالجة..."
+              style="min-height: 60px"
+            ></textarea>
+          </div>
+
+          <!-- تكلفة المخبر -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-top:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              🔬 تكلفة مخبرية
+              <select id="t-has-lab" onchange="toggleLabSection()" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">
+                <option value="no">لا</option>
+                <option value="yes">نعم</option>
+              </select>
+            </div>
+            <div id="t-lab-section" style="display:none">
+              <div class="form-grid-3" style="margin-bottom:10px">
+                <div class="form-group">
+                  <label>إجمالي تكلفة المخبر</label>
+                  <div class="input-with-currency">
+                    <input type="number" id="t-lab-cost" placeholder="0" min="0" oninput="calcLabRemaining()">
+                    <div class="currency-select-wrap">
+                      <select id="t-lab-currency" onchange="calcLabRemaining()">
+                        <option value="SYP">ل.س</option>
+                        <option value="USD">USD $</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>المسدَّد للمخبر</label>
+                  <input type="number" id="t-lab-paid" placeholder="0" min="0" oninput="calcLabRemaining()">
+                </div>
+                <div class="form-group">
+                  <label>المتبقي للمخبر</label>
+                  <input type="number" id="t-lab-remaining" placeholder="0" readonly style="background:var(--surface2);color:var(--danger);font-weight:700">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>تفاصيل تكلفة المخبر والحالة الطبية</label>
+                <textarea id="t-lab-details" placeholder="اكتب تفاصيل عمل المخبر والحالة الطبية للمريض..." style="min-height:70px"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="closeModal('modal-treatment')"
+          >
+            إلغاء
+          </button>
+          <button class="btn btn-accent" onclick="saveTreatment()">
+            🦷 إضافة المعالجة
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: ADD PAYMENT ========== -->
+    <div class="modal-overlay" id="modal-payment">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">💳 تسجيل دفعة</div>
+          <button class="close-btn" onclick="closeModal('modal-payment')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom:12px">
+            <label>ربط الدفعة بمعالجة سنية</label>
+            <select id="pay-treatment-id">
+              <option value="">-- اختر المعالجة --</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 12px">
+            <label>مبلغ الدفعة</label>
+            <div class="input-with-currency">
+              <input type="number" id="pay-amount" placeholder="0" />
+              <div class="currency-select-wrap">
+                <select id="pay-currency">
+                  <option value="SYP">ل.س</option>
+                  <option value="USD">USD $</option>
+                  <option value="EUR">EUR €</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>ملاحظة</label>
+            <input type="text" id="pay-note" placeholder="اختياري" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-payment')">
+            إلغاء
+          </button>
+          <button class="btn btn-success" onclick="savePayment()">
+            ✅ تسجيل
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: LAB PAYMENT ========== -->
+    <div class="modal-overlay" id="modal-lab-payment">
+      <div class="modal" style="max-width: 480px">
+        <div class="modal-header">
+          <div class="modal-title">🔬 تسديد تكلفة المخبر</div>
+          <button class="close-btn" onclick="closeModal('modal-lab-payment')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info" id="lab-payment-info" style="margin-bottom:16px"></div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>مبلغ الدفع <span class="required">*</span></label>
+            <div class="input-with-currency">
+              <input type="number" id="lab-pay-amount" placeholder="0" min="0" />
+              <div class="currency-select-wrap">
+                <select id="lab-pay-currency">
+                  <option value="SYP">ل.س</option>
+                  <option value="USD">USD $</option>
+                  <option value="EUR">EUR €</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>ملاحظة</label>
+            <input type="text" id="lab-pay-note" placeholder="اختياري" />
+          </div>
+          <input type="hidden" id="lab-pay-treatment-idx" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-lab-payment')">إلغاء</button>
+          <button class="btn btn-warning" onclick="saveLabPayment()">🔬 تسجيل دفعة المخبر</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+      <img id="lightbox-img" src="" alt="" />
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+
+    <!-- ========== MODAL: ADD/EDIT APPOINTMENT ========== -->
+    <div class="modal-overlay" id="modal-appointment" onclick="if(event.target===this)closeModal('modal-appointment')">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title" id="appt-modal-title">📅 موعد جديد</div>
+          <button class="close-btn" onclick="closeModal('modal-appointment')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom:12px">
+            <label>المريض <span class="required">*</span></label>
+            <select id="appt-patient" style="font-size:14px">
+              <option value="">-- اختر مريضاً --</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>نوع الموعد <span class="required">*</span></label>
+            <input type="text" id="appt-type" placeholder="مثال: فحص، حشو، خلع، متابعة..." />
+          </div>
+          <div class="form-grid" style="margin-bottom:12px">
+            <div class="form-group">
+              <label>التاريخ <span class="required">*</span></label>
+              <input type="date" id="appt-date" />
+            </div>
+            <div class="form-group">
+              <label>الوقت <span class="required">*</span></label>
+              <input type="time" id="appt-time" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>المدة (دقائق)</label>
+            <select id="appt-duration">
+              <option value="15">15 دقيقة</option>
+              <option value="30" selected>30 دقيقة</option>
+              <option value="45">45 دقيقة</option>
+              <option value="60">ساعة واحدة</option>
+              <option value="90">90 دقيقة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ملاحظات</label>
+            <textarea id="appt-notes" rows="2" placeholder="أي ملاحظات للموعد..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-appointment')">إلغاء</button>
+          <button class="btn btn-accent" onclick="saveAppointment()">💾 حفظ الموعد</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: TREATMENT PLAN ========== -->
+    <div class="modal-overlay" id="modal-treatment-plan" onclick="if(event.target===this)closeModal('modal-treatment-plan')">
+      <div class="modal" style="max-width:700px">
+        <div class="modal-header">
+          <div class="modal-title">📋 خطة علاجية جديدة</div>
+          <button class="close-btn" onclick="closeModal('modal-treatment-plan')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom:14px">
+            <label>المريض <span class="required">*</span></label>
+            <select id="tp-patient" style="font-size:14px">
+              <option value="">-- اختر مريضاً --</option>
+            </select>
+          </div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="form-group">
+              <label>تاريخ الخطة</label>
+              <input type="date" id="tp-date" />
+            </div>
+            <div class="form-group">
+              <label>الطبيب المعالج</label>
+              <input type="text" id="tp-doctor" placeholder="اسم الطبيب" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>التشخيص الرئيسي</label>
+            <textarea id="tp-diagnosis" rows="2" placeholder="وصف الحالة والتشخيص..."></textarea>
+          </div>
+          <div class="section-divider" style="margin:14px 0 10px">مراحل العلاج</div>
+          <div id="tp-steps-list"></div>
+          <button class="btn btn-outline btn-sm" onclick="addTpStep()" style="margin-bottom:14px">➕ إضافة مرحلة</button>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>توصيات وتعليمات للمريض</label>
+            <textarea id="tp-instructions" rows="3" placeholder="تعليمات العناية بعد العلاج..."></textarea>
+          </div>
+          <div class="form-grid-3" style="margin-bottom:14px">
+            <div class="form-group">
+              <label>إجمالي التكلفة التقديرية</label>
+              <input type="number" id="tp-total-cost" placeholder="0" min="0" />
+            </div>
+            <div class="form-group">
+              <label>العملة</label>
+              <select id="tp-currency">
+                <option value="SYP">ل.س</option>
+                <option value="USD">USD $</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>مدة العلاج المتوقعة</label>
+              <input type="text" id="tp-duration" placeholder="مثال: 3 أشهر" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-treatment-plan')">إلغاء</button>
+          <button class="btn btn-accent" id="tp-save-btn" onclick="saveTreatmentPlan()">💾 حفظ الخطة</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLINIC NAME MODAL -->
+    <div
+      class="modal-overlay"
+      id="modal-clinic-name"
+      onclick="if (event.target === this) this.classList.remove('open');"
+    >
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">🏥 تخصيص اسم العيادة</div>
+          <button
+            class="close-btn"
+            onclick="
+              document
+                .getElementById('modal-clinic-name')
+                .classList.remove('open')
+            "
+          >
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <p
+            style="
+              font-size: 13px;
+              color: var(--text-muted);
+              margin-bottom: 16px;
+              line-height: 1.7;
+            "
+          >
+            أدخل اسم عيادتك أو اسمك كطبيب. سيظهر هذا الاسم في الشريط الجانبي
+            ويُحفظ تلقائياً على هذا الجهاز.
+          </p>
+          <div class="form-group">
+            <label>اسم العيادة / الطبيب <span class="required">*</span></label>
+            <input
+              type="text"
+              id="clinic-name-input"
+              placeholder="مثال: د. الكنج  — عيادة الأسنان"
+              onkeydown="if (event.key === 'Enter') saveClinicName();"
+              style="font-size: 15px; font-weight: 600"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn btn-outline"
+            onclick="
+              document
+                .getElementById('modal-clinic-name')
+                .classList.remove('open')
+            "
+          >
+            إلغاء
+          </button>
+          <button class="btn btn-accent" onclick="saveClinicName()">
+            💾 حفظ الاسم
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: DENTAL CHART — خريطة الأسنان ========== -->
+    <div class="modal-overlay" id="modal-dental-chart" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">🦷 خريطة الأسنان التفاعلية</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="dc-patient-name"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-outline btn-sm" onclick="printDentalChart()">🖨 طباعة</button>
+            <button class="btn btn-outline btn-sm" onclick="resetDentalChart()">↺ تصفير</button>
+            <button class="close-btn" onclick="document.getElementById('modal-dental-chart').classList.remove('open')">✕</button>
+          </div>
+        </div>
+        <div class="modal-body">
+
+          <!-- مفتاح الألوان -->
+          <div class="dc-legend" style="margin-bottom:16px">
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#f0fff4;border:1.5px solid #38a169"></div>سليم</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#fffbeb;border:1.5px solid #d69e2e"></div>تسوس</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#e0f0f8;border:1.5px solid #63b3d8"></div>حشو</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#faf5ff;border:1.5px solid #9f7aea"></div>تاج</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#fff5f5;border:1.5px solid #fc8181"></div>مخلوع</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#fffaf0;border:1.5px solid #f6a623"></div>جسر</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#ebf8ff;border:1.5px solid #4299e1"></div>زرعة</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#fffbeb;border:1.5px solid #c05621"></div>معالجة لبية</div>
+            <div class="dc-legend-item"><div class="dc-legend-dot" style="background:#f7fafc;border:1.5px solid #a0aec0"></div>مفقود خلقياً</div>
+          </div>
+
+          <!-- الخريطة -->
+          <div class="dc-chart-area">
+            <!-- الفك العلوي -->
+            <div class="dc-jaw-label">الفك العلوي — يمين ←→ يسار</div>
+            <div class="dc-teeth-row" id="dc-upper-row"></div>
+
+            <!-- فاصل الفكين -->
+            <div class="dc-divider">خط الإطباق</div>
+
+            <!-- الفك السفلي -->
+            <div class="dc-teeth-row" id="dc-lower-row"></div>
+            <div class="dc-jaw-label" style="margin-top:8px">الفك السفلي — يمين ←→ يسار</div>
+          </div>
+
+          <!-- ملخص -->
+          <div id="dc-summary"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: TOOTH EDITOR — محرر السن ========== -->
+    <div class="modal-overlay" id="modal-tooth-editor" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title" id="dc-editor-title">تعديل حالة السن</div>
+          <button class="close-btn" onclick="document.getElementById('modal-tooth-editor').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="dc-tooth-num-hidden" />
+
+          <div class="form-group" style="margin-bottom:16px">
+            <label>حالة السن</label>
+            <div class="dc-state-buttons" id="dc-state-buttons"></div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:16px">
+            <label>ملاحظات على هذا السن (اختياري)</label>
+            <textarea id="dc-tooth-notes" rows="2" placeholder="مثال: حشو قديم، يحتاج متابعة..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="margin-bottom:8px;display:block">المعالجات المرتبطة بهذا السن</label>
+            <div id="dc-tooth-history"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="document.getElementById('modal-tooth-editor').classList.remove('open')">إلغاء</button>
+          <button class="btn btn-accent" onclick="saveToothState()">💾 حفظ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MODAL: CHANGE PASSWORD — تغيير كلمة المرور ========== -->
+    <div class="modal-overlay" id="modal-change-password" onclick="if(event.target===this)this.classList.remove('open')">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">🔐 تغيير كلمة المرور</div>
+          <button class="close-btn" onclick="document.getElementById('modal-change-password').classList.remove('open')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom:14px">
+            <label>كلمة المرور الحالية <span class="required">*</span></label>
+            <input type="password" id="cp-current" placeholder="أدخل كلمة المرور الحالية" />
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label>كلمة المرور الجديدة <span class="required">*</span></label>
+            <input type="password" id="cp-new" placeholder="4 أحرف على الأقل" />
+          </div>
+          <div class="form-group">
+            <label>تأكيد كلمة المرور <span class="required">*</span></label>
+            <input type="password" id="cp-confirm" placeholder="أعد كتابة كلمة المرور" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="document.getElementById('modal-change-password').classList.remove('open')">إلغاء</button>
+          <button class="btn btn-primary" onclick="saveNewPassword()">🔐 تغيير كلمة المرور</button>
+        </div>
+      </div>
+    </div>
+
+    </div><!-- end #app-wrapper -->
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- API integration (must load before app scripts) -->
+    <script src="js/api-client.js"></script>
+    <script src="js/backend.js"></script>
+    <!-- Application Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/dental-chart.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>

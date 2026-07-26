@@ -1,0 +1,220 @@
+/* ===========================
+   AUTH — شاشة تسجيل الدخول
+   =========================== */
+
+#auth-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a4d6e 0%, #0d3d56 40%, #071e2e 100%);
+  direction: rtl;
+}
+
+/* نجوم خلفية */
+#auth-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(0,196,180,0.15) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px, 100px 100px;
+  background-position: 0 0, 30px 30px;
+  pointer-events: none;
+}
+
+#login-card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo-icon {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #00c4b4, #0a8a7e);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(0,196,180,0.35);
+}
+
+#login-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+#login-subtitle {
+  color: rgba(255,255,255,0.55);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 0 4px;
+}
+
+.login-field {
+  margin-bottom: 16px;
+}
+
+.login-field label {
+  display: block;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.login-input-wrap {
+  position: relative;
+}
+
+.login-input-wrap input {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+  direction: ltr;
+  text-align: right;
+}
+
+.login-input-wrap input::placeholder {
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0;
+}
+
+.login-input-wrap input:focus {
+  outline: none;
+  border-color: #00c4b4;
+  background: rgba(0,196,180,0.1);
+  box-shadow: 0 0 0 3px rgba(0,196,180,0.2);
+}
+
+.login-eye-btn {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+.login-eye-btn:hover { color: rgba(255,255,255,0.8); }
+
+#login-error {
+  display: none;
+  background: rgba(229,62,62,0.15);
+  border: 1px solid rgba(229,62,62,0.4);
+  color: #fc8181;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+#login-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #00c4b4, #00a89a);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 6px 20px rgba(0,196,180,0.35);
+  margin-top: 4px;
+}
+
+#login-btn:hover {
+  background: linear-gradient(135deg, #00d4c3, #00c4b4);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0,196,180,0.45);
+}
+
+#login-btn:active { transform: translateY(0); }
+#login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  color: rgba(255,255,255,0.3);
+  font-size: 11px;
+}
+
+/* انيميشن اهتزاز خطأ */
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+#login-card.shake { animation: shake 0.4s ease; }
+
+/* ===== زر تسجيل الخروج في topbar ===== */
+.logout-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.logout-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* ===== مودال تغيير كلمة المرور ===== */
+#modal-change-password .modal { max-width: 420px; }
+
+/* ===== الوضع الليلي ===== */
+[data-theme="dark"] #auth-overlay {
+  background: linear-gradient(135deg, #071523 0%, #0a1f2e 40%, #050d17 100%);
+}
+[data-theme="dark"] #login-card {
+  background: rgba(10,30,45,0.7);
+  border-color: rgba(255,255,255,0.08);
+}
